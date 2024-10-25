@@ -1,3 +1,3 @@
-module github.com/justinjest/gator/v2
+module github.com/justinjest/gator
 
 go 1.23.0
