@@ -2,6 +2,7 @@ package json_parser
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -17,23 +18,24 @@ func getConfigFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	filePath := homeDir + configFileName
+	filePath := homeDir + "/" + configFileName
 	return filePath, nil
 }
 
-func Read() (*Config, error) {
+func Read() (Config, error) {
 	path, err := getConfigFilePath()
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 	var config Config
 	if err := json.Unmarshal(data, &config); err != nil {
-		return nil, err
+		return Config{}, err
 	}
-
-	return &config, nil
+	fmt.Printf("%v\n", config.Db_url)
+	fmt.Printf("%v\n", config.Current_user_name)
+	return config, nil
 }
