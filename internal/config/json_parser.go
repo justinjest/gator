@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
 )
 
 type Config struct {
 	Db_url            string `json: "db_url"`
 	Current_user_name string `json: "current_user_name"`
 }
+
+var configLock sync.RWMutex
 
 const configFileName = `.gatorconfig.json`
 
@@ -24,6 +27,8 @@ func getConfigFilePath() (string, error) {
 
 func Read() (Config, error) {
 	path, err := getConfigFilePath()
+	configLock.RLock()
+	defer configLock.Unlock()
 	if err != nil {
 		return Config{}, err
 	}
@@ -38,4 +43,28 @@ func Read() (Config, error) {
 	fmt.Printf("%v\n", config.Db_url)
 	fmt.Printf("%v\n", config.Current_user_name)
 	return config, nil
+}
+
+func SetUser(config Config, user string) (Config, error) {
+	config.Current_user_name = user
+	writeCfg(config)
+	return config, nil
+}
+
+func writeCfg(cfg Config) error {
+	configLock.Lock()
+	defer configLock.Unlock()
+	jsonBytes, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	path, err := getConfigFilePath()
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(path, jsonBytes, 0600)
+	if err != nil {
+		return err
+	}
+	return nil
 }
