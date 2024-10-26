@@ -2,7 +2,6 @@ package json_parser
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"sync"
 )
@@ -28,7 +27,7 @@ func getConfigFilePath() (string, error) {
 func Read() (Config, error) {
 	path, err := getConfigFilePath()
 	configLock.RLock()
-	defer configLock.Unlock()
+	defer configLock.RUnlock()
 	if err != nil {
 		return Config{}, err
 	}
@@ -40,8 +39,6 @@ func Read() (Config, error) {
 	if err := json.Unmarshal(data, &config); err != nil {
 		return Config{}, err
 	}
-	fmt.Printf("%v\n", config.Db_url)
-	fmt.Printf("%v\n", config.Current_user_name)
 	return config, nil
 }
 
