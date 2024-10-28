@@ -3,8 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/xml"
 	"errors"
 	"fmt"
+	"html"
+	"io"
+	"net/http"
 	"os"
 	"time"
 
@@ -29,6 +33,48 @@ type commands struct {
 	method map[string]func(*state, command) error
 }
 
+type RSSFeed struct {
+	Channel struct {
+		Title       string    `xml:"title"`
+		Link        string    `xml:"link"`
+		Description string    `xml:"description"`
+		Item        []RSSItem `xml:"item"`
+	} `xml:"channel"`
+}
+
+type RSSItem struct {
+	Title       string `xml:"title"`
+	Link        string `xml:"link"`
+	Description string `xml:"description"`
+	PubDate     string `xml:"pubDate"`
+}
+
+func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
+	var feed RSSFeed
+	var client http.Client
+	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
+	if err != nil {
+		return &feed, err
+	}
+	req.Header.Add("user-agent", "gator")
+	res, err := client.Do(req)
+	if err != nil {
+		return &feed, err
+	}
+	defer res.Body.Close()
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		return &feed, err
+	}
+	err = xml.Unmarshal(b, &feed)
+	if err != nil {
+		return &feed, err
+	}
+	feed.Channel.Title = html.UnescapeString(feed.Channel.Title)
+	feed.Channel.Description = html.UnescapeString(feed.Channel.Description)
+	return &feed, nil
+}
+
 func (c *commands) register(name string, f func(*state, command) error) {
 	c.method[name] = f
 }
@@ -40,13 +86,37 @@ func (c *commands) run(s *state, cmd command) error {
 	}
 	return nil
 }
-
+func agg(s *state, cmd command) error {
+	url := "https://www.wagslane.dev/index.xml"
+	res, err := fetchFeed(context.Background(), url)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%v\n", res)
+	return nil
+}
 func reset(s *state, cmd command) error {
 	err := s.db.Reset(context.Background())
 	if err != nil {
 		return err
 	}
 	fmt.Printf("Reset complete, all accounts deleted\n")
+	return nil
+}
+
+func getUsers(s *state, cmd command) error {
+	currentUser := s.cfg.Current_user_name
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+	for _, user := range users {
+		if user != currentUser {
+			fmt.Printf("* %v\n", user)
+		} else {
+			fmt.Printf("* %v (current)\n", user)
+		}
+	}
 	return nil
 }
 
@@ -111,6 +181,8 @@ func main() {
 	c.register("login", handlerLogin)
 	c.register("register", registerNewUser)
 	c.register("reset", reset)
+	c.register("users", getUsers)
+	c.register("agg", agg)
 	if len(os.Args) < 2 {
 		err = errors.New("too few cmdline arguments")
 	}
