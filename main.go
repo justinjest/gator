@@ -41,6 +41,15 @@ func (c *commands) run(s *state, cmd command) error {
 	return nil
 }
 
+func reset(s *state, cmd command) error {
+	err := s.db.Reset(context.Background())
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Reset complete, all accounts deleted\n")
+	return nil
+}
+
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.args) == 0 {
 		return errors.New("user name requried for login function")
@@ -101,6 +110,7 @@ func main() {
 	}
 	c.register("login", handlerLogin)
 	c.register("register", registerNewUser)
+	c.register("reset", reset)
 	if len(os.Args) < 2 {
 		err = errors.New("too few cmdline arguments")
 	}
