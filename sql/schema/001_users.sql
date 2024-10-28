@@ -6,5 +6,5 @@ updated_at timestamp NOT NULL,
 name text UNIQUE NOT NULL
 );
 
--- -goose Down
+-- +goose Down
 DROP TABLE users;

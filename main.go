@@ -6,6 +6,8 @@ import (
 	"os"
 
 	json_parser "github.com/justinjest/gator/internal/config"
+
+	_ "github.com/lib/pq"
 )
 
 type state struct {
@@ -45,7 +47,7 @@ func handlerLogin(s *state, cmd command) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Username set to %v\n", name)
+	fmt.Printf("Username set to %v\n	", name)
 	return nil
 }
 
