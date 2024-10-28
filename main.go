@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/google/uuid"
 	json_parser "github.com/justinjest/gator/internal/config"
 	"github.com/justinjest/gator/internal/database"
 
@@ -46,20 +49,58 @@ func handlerLogin(s *state, cmd command) error {
 		return errors.New("login takes exactly one argument")
 	}
 	name := cmd.args[0]
-	_, err := json_parser.SetUser(*s.cfg, name)
+	_, err := s.db.GetUser(context.Background(), name)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Username set to %v\n	", name)
+	_, err = json_parser.SetUser(*s.cfg, name)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Username set to %v\n", name)
+	return nil
+}
+
+func registerNewUser(s *state, cmd command) error {
+	if len(cmd.args) == 0 {
+		return errors.New("user name requried for register function")
+	}
+	if len(cmd.args) >= 2 {
+		return errors.New("register takes exactly one argument")
+	}
+	timeNow := time.Now()
+	uuid := uuid.New().String()
+	name := cmd.args[0]
+	params := database.CreateUserParams{
+		ID:        uuid,
+		CreatedAt: timeNow,
+		UpdatedAt: timeNow,
+		Name:      name,
+	}
+	user, err := s.db.CreateUser(context.Background(), params)
+	if err != nil {
+		return err
+	}
+	s.cfg.Current_user_name = name
+	fmt.Printf("User created %v", user)
+	_, err = json_parser.SetUser(*s.cfg, name)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func main() {
 	s, err := startUp()
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+		os.Exit(1)
+	}
 	c := commands{
 		method: make(map[string]func(*state, command) error),
 	}
 	c.register("login", handlerLogin)
+	c.register("register", registerNewUser)
 	if len(os.Args) < 2 {
 		err = errors.New("too few cmdline arguments")
 	}
