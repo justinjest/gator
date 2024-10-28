@@ -55,11 +55,7 @@ func handlerLogin(s *state, cmd command) error {
 }
 
 func main() {
-	config, err := json_parser.Read()
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
+	s, err := startUp()
 	c := commands{
 		method: make(map[string]func(*state, command) error),
 	}
@@ -75,18 +71,25 @@ func main() {
 		os.Args[1],
 		os.Args[2:],
 	}
-	var s state
-	s.cfg = &config
-	db, err := sql.Open("postgres", s.cfg.Db_url)
-	if err != nil {
-		fmt.Printf("Error %v\n", err)
-		os.Exit(1)
-	}
-	dbQueries := database.New(db)
-	s.db = dbQueries
 	err = c.run(&s, cmd)
 	if err != nil {
 		fmt.Printf("Error %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func startUp() (state, error) {
+	config, err := json_parser.Read()
+	if err != nil {
+		return state{}, errors.New("unable to read json")
+	}
+	var s state
+	s.cfg = &config
+	db, err := sql.Open("postgres", s.cfg.Db_url)
+	if err != nil {
+		return state{}, errors.New("unable to open postgres db")
+	}
+	dbQueries := database.New(db)
+	s.db = dbQueries
+	return s, nil
 }
