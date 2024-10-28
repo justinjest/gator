@@ -1,17 +1,20 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
 
 	json_parser "github.com/justinjest/gator/internal/config"
+	"github.com/justinjest/gator/internal/database"
 
 	_ "github.com/lib/pq"
 )
 
 type state struct {
-	config *json_parser.Config
+	db  *database.Queries
+	cfg *json_parser.Config
 }
 
 type command struct {
@@ -43,7 +46,7 @@ func handlerLogin(s *state, cmd command) error {
 		return errors.New("login takes exactly one argument")
 	}
 	name := cmd.args[0]
-	_, err := json_parser.SetUser(*s.config, name)
+	_, err := json_parser.SetUser(*s.cfg, name)
 	if err != nil {
 		return err
 	}
@@ -73,7 +76,14 @@ func main() {
 		os.Args[2:],
 	}
 	var s state
-	s.config = &config
+	s.cfg = &config
+	db, err := sql.Open("postgres", s.cfg.Db_url)
+	if err != nil {
+		fmt.Printf("Error %v\n", err)
+		os.Exit(1)
+	}
+	dbQueries := database.New(db)
+	s.db = dbQueries
 	err = c.run(&s, cmd)
 	if err != nil {
 		fmt.Printf("Error %v\n", err)
