@@ -86,6 +86,19 @@ func (c *commands) run(s *state, cmd command) error {
 	}
 	return nil
 }
+func addfeed(s *state, cmd command) error {
+	currentUser := s.cfg.Current_user_name
+	var feed database.Feed
+	user, err := s.db.GetUser(context.Background(), currentUser)
+	if err != nil {
+		return err
+	}
+	now := time.Now()
+	uuid := uuid.New().String()
+	databa
+
+}
+
 func agg(s *state, cmd command) error {
 	url := "https://www.wagslane.dev/index.xml"
 	res, err := fetchFeed(context.Background(), url)
