@@ -72,3 +72,39 @@ func (q *Queries) GetFeed(ctx context.Context, name string) (Feed, error) {
 	)
 	return i, err
 }
+
+const pprint = `-- name: Pprint :many
+SELECT feeds.name, feeds.url, users.name as username
+FROM feeds
+INNER JOIN users
+ON feeds.user_id = users.id
+`
+
+type PprintRow struct {
+	Name     string
+	Url      string
+	Username string
+}
+
+func (q *Queries) Pprint(ctx context.Context) ([]PprintRow, error) {
+	rows, err := q.db.QueryContext(ctx, pprint)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PprintRow
+	for rows.Next() {
+		var i PprintRow
+		if err := rows.Scan(&i.Name, &i.Url, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

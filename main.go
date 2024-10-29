@@ -87,16 +87,34 @@ func (c *commands) run(s *state, cmd command) error {
 	return nil
 }
 func addfeed(s *state, cmd command) error {
+	if len(cmd.args) != 2 {
+		return errors.New("addfeed takes two commands, name and url")
+	}
 	currentUser := s.cfg.Current_user_name
-	var feed database.Feed
 	user, err := s.db.GetUser(context.Background(), currentUser)
 	if err != nil {
 		return err
 	}
 	now := time.Now()
 	uuid := uuid.New().String()
-	databa
-
+	params := database.CreateFeedParams{
+		ID:        uuid,
+		CreatedAt: now,
+		UpdatedAt: now,
+		Name:      cmd.args[0],
+		Url:       cmd.args[1],
+		UserID:    user.ID,
+	}
+	feed, err := s.db.CreateFeed(context.Background(), params)
+	if err != nil {
+		return err
+	}
+	entry, err := s.db.GetFeed(context.Background(), feed.Name)
+	if err != nil {
+		return err
+	}
+	print("%v\n", entry.Name)
+	return nil
 }
 
 func agg(s *state, cmd command) error {
@@ -116,7 +134,12 @@ func reset(s *state, cmd command) error {
 	fmt.Printf("Reset complete, all accounts deleted\n")
 	return nil
 }
-
+func getFeeds(s *state, cmd command) error {
+	if len(cmd.args) != 0 {
+		return errors.New("getFeeds accepts no arguments")
+	}
+	feeds := s.db.GetFeed()
+}
 func getUsers(s *state, cmd command) error {
 	currentUser := s.cfg.Current_user_name
 	users, err := s.db.GetUsers(context.Background())
@@ -196,6 +219,7 @@ func main() {
 	c.register("reset", reset)
 	c.register("users", getUsers)
 	c.register("agg", agg)
+	c.register("addfeed", addfeed)
 	if len(os.Args) < 2 {
 		err = errors.New("too few cmdline arguments")
 	}

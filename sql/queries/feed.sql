@@ -14,3 +14,9 @@ RETURNING *;
 SELECT * 
 FROM feeds
 WHERE name = $1;
+
+-- name: Pprint :many
+SELECT feeds.name, feeds.url, users.name as username
+FROM feeds
+INNER JOIN users
+ON feeds.user_id = users.id;
