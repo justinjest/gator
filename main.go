@@ -280,6 +280,7 @@ func main() {
 	c.register("addfeed", addfeed)
 	c.register("feeds", getFeeds)
 	c.register("follow", follow)
+	c.register("following", following)
 	if len(os.Args) < 2 {
 		err = errors.New("too few cmdline arguments")
 	}
