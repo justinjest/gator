@@ -80,14 +80,9 @@ func (c *commands) run(s *state, cmd command) error {
 	}
 	return nil
 }
-func addfeed(s *state, cmd command) error {
+func addfeed(s *state, cmd command, user database.User) error {
 	if len(cmd.args) != 2 {
 		return errors.New("addfeed takes two commands, name and url")
-	}
-	currentUser := s.cfg.Current_user_name
-	user, err := s.db.GetUser(context.Background(), currentUser)
-	if err != nil {
-		return err
 	}
 	now := time.Now()
 	uuid1 := uuid.New().String()
@@ -215,17 +210,12 @@ func registerNewUser(s *state, cmd command) error {
 	}
 	return nil
 }
-func follow(s *state, cmd command) error {
+func follow(s *state, cmd command, user database.User) error {
 	if len(cmd.args) != 1 {
 		return errors.New("follow takes exactly one argument, the url")
 	}
-	currentUser := s.cfg.Current_user_name
 	uuid := uuid.New().String()
 	now := time.Now()
-	user, err := s.db.GetUser(context.Background(), currentUser)
-	if err != nil {
-		return err
-	}
 	feed, err := s.db.GetFeedByUrl(context.Background(), cmd.args[0])
 	if err != nil {
 		return err
@@ -245,16 +235,11 @@ func follow(s *state, cmd command) error {
 	fmt.Printf("%v\n", feed.Name)
 	return nil
 }
-func following(s *state, cmd command) error {
+func following(s *state, cmd command, user database.User) error {
 	if len(cmd.args) != 0 {
 		return errors.New("following does not accept any arguments")
 	}
-	user := s.cfg.Current_user_name
-	userData, err := s.db.GetUser(context.Background(), user)
-	if err != nil {
-		return err
-	}
-	feeds, err := s.db.GetFeedFollowsForUser(context.Background(), userData.ID)
+	feeds, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
 	if err != nil {
 		return err
 	}
@@ -277,10 +262,10 @@ func main() {
 	c.register("reset", reset)
 	c.register("users", getUsers)
 	c.register("agg", agg)
-	c.register("addfeed", addfeed)
+	c.register("addfeed", middlewareLoggedIn(addfeed))
 	c.register("feeds", getFeeds)
-	c.register("follow", follow)
-	c.register("following", following)
+	c.register("follow", middlewareLoggedIn(follow))
+	c.register("following", middlewareLoggedIn(following))
 	if len(os.Args) < 2 {
 		err = errors.New("too few cmdline arguments")
 	}
@@ -298,7 +283,6 @@ func main() {
 		os.Exit(1)
 	}
 }
-
 func startUp() (state, error) {
 	config, err := json_parser.Read()
 	if err != nil {
@@ -313,4 +297,13 @@ func startUp() (state, error) {
 	dbQueries := database.New(db)
 	s.db = dbQueries
 	return s, nil
+}
+func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {
+	return func(s *state, cmd command) error {
+		user, err := s.db.GetUser(context.Background(), s.cfg.Current_user_name)
+		if err != nil {
+			return err
+		}
+		return handler(s, cmd, user)
+	}
 }
