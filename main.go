@@ -211,11 +211,18 @@ func registerNewUser(s *state, cmd command) error {
 	}
 	return nil
 }
-func follow(s *state, url string) error {
+func follow(s *state, cmd command) error {
+	if len(cmd.args) != 1 {
+		return errors.New("follow takes exactly one argument, the url")
+	}
 	currentUser := s.cfg.Current_user_name
 	uuid := uuid.New().String()
 	now := time.Now()
 	user, err := s.db.GetUser(context.Background(), currentUser)
+	if err != nil {
+		return err
+	}
+	feed, err := s.db.GetFeedByUrl(context.Background(), url)
 	if err != nil {
 		return err
 	}
@@ -224,8 +231,15 @@ func follow(s *state, url string) error {
 		CreatedAt: now,
 		UpdatedAt: now,
 		UserID:    user.ID,
-		FeedID:    a,
+		FeedID:    feed.ID,
 	}
+	_, err = s.db.CreateFeedFollow(context.Background(), params)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%v\n", user.Name)
+	fmt.Printf("%v\n", feed.Name)
+	return nil
 }
 func main() {
 	s, err := startUp()
@@ -243,6 +257,7 @@ func main() {
 	c.register("agg", agg)
 	c.register("addfeed", addfeed)
 	c.register("feeds", getFeeds)
+	c.register("follow", follow)
 	if len(os.Args) < 2 {
 		err = errors.New("too few cmdline arguments")
 	}
