@@ -15,5 +15,16 @@ CREATE TABLE feeds(
     user_id text NOT NULL references users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE feed_follows(
+    id text PRIMARY KEY,
+    created_at timestamp NOT NULL,
+    updated_at timestamp NOT NULL,
+    user_id text NOT NULL references users(id) ON DELETE CASCADE,
+    feed_id text NOT NULL references feeds(id) ON DELETE CASCADE,
+    UNIQUE(user_id, feed_id) 
+);
+
 -- +goose Down
+DROP TABLE feeds;
+DROP TABLE feed_follows;
 DROP TABLE users;

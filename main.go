@@ -138,7 +138,14 @@ func getFeeds(s *state, cmd command) error {
 	if len(cmd.args) != 0 {
 		return errors.New("getFeeds accepts no arguments")
 	}
-	feeds := s.db.GetFeed()
+	feeds, err := s.db.Pprint(context.Background())
+	if err != nil {
+		return err
+	}
+	for _, item := range feeds {
+		fmt.Printf("%v\n", item)
+	}
+	return nil
 }
 func getUsers(s *state, cmd command) error {
 	currentUser := s.cfg.Current_user_name
@@ -220,6 +227,7 @@ func main() {
 	c.register("users", getUsers)
 	c.register("agg", agg)
 	c.register("addfeed", addfeed)
+	c.register("feeds", getFeeds)
 	if len(os.Args) < 2 {
 		err = errors.New("too few cmdline arguments")
 	}
