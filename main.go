@@ -23,16 +23,13 @@ type state struct {
 	db  *database.Queries
 	cfg *json_parser.Config
 }
-
 type command struct {
 	name string
 	args []string
 }
-
 type commands struct {
 	method map[string]func(*state, command) error
 }
-
 type RSSFeed struct {
 	Channel struct {
 		Title       string    `xml:"title"`
@@ -41,7 +38,6 @@ type RSSFeed struct {
 		Item        []RSSItem `xml:"item"`
 	} `xml:"channel"`
 }
-
 type RSSItem struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
@@ -74,11 +70,9 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	feed.Channel.Description = html.UnescapeString(feed.Channel.Description)
 	return &feed, nil
 }
-
 func (c *commands) register(name string, f func(*state, command) error) {
 	c.method[name] = f
 }
-
 func (c *commands) run(s *state, cmd command) error {
 	err := c.method[cmd.name](s, cmd)
 	if err != nil {
@@ -116,7 +110,6 @@ func addfeed(s *state, cmd command) error {
 	print("%v\n", entry.Name)
 	return nil
 }
-
 func agg(s *state, cmd command) error {
 	url := "https://www.wagslane.dev/index.xml"
 	res, err := fetchFeed(context.Background(), url)
@@ -162,7 +155,6 @@ func getUsers(s *state, cmd command) error {
 	}
 	return nil
 }
-
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.args) == 0 {
 		return errors.New("user name requried for login function")
@@ -182,7 +174,6 @@ func handlerLogin(s *state, cmd command) error {
 	fmt.Printf("Username set to %v\n", name)
 	return nil
 }
-
 func registerNewUser(s *state, cmd command) error {
 	if len(cmd.args) == 0 {
 		return errors.New("user name requried for register function")
@@ -222,7 +213,7 @@ func follow(s *state, cmd command) error {
 	if err != nil {
 		return err
 	}
-	feed, err := s.db.GetFeedByUrl(context.Background(), url)
+	feed, err := s.db.GetFeedByUrl(context.Background(), cmd.args[0])
 	if err != nil {
 		return err
 	}
