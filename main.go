@@ -90,9 +90,9 @@ func addfeed(s *state, cmd command) error {
 		return err
 	}
 	now := time.Now()
-	uuid := uuid.New().String()
+	uuid1 := uuid.New().String()
 	params := database.CreateFeedParams{
-		ID:        uuid,
+		ID:        uuid1,
 		CreatedAt: now,
 		UpdatedAt: now,
 		Name:      cmd.args[0],
@@ -100,6 +100,19 @@ func addfeed(s *state, cmd command) error {
 		UserID:    user.ID,
 	}
 	feed, err := s.db.CreateFeed(context.Background(), params)
+	if err != nil {
+		return err
+	}
+	now = time.Now()
+	uuid2 := uuid.New().String()
+	paramsFeedFollows := database.CreateFeedFollowParams{
+		ID:        uuid2,
+		CreatedAt: now,
+		UpdatedAt: now,
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	}
+	_, err = s.db.CreateFeedFollow(context.Background(), paramsFeedFollows)
 	if err != nil {
 		return err
 	}
@@ -230,6 +243,24 @@ func follow(s *state, cmd command) error {
 	}
 	fmt.Printf("%v\n", user.Name)
 	fmt.Printf("%v\n", feed.Name)
+	return nil
+}
+func following(s *state, cmd command) error {
+	if len(cmd.args) != 0 {
+		return errors.New("following does not accept any arguments")
+	}
+	user := s.cfg.Current_user_name
+	userData, err := s.db.GetUser(context.Background(), user)
+	if err != nil {
+		return err
+	}
+	feeds, err := s.db.GetFeedFollowsForUser(context.Background(), userData.ID)
+	if err != nil {
+		return err
+	}
+	for _, data := range feeds {
+		fmt.Printf("%v\n", data)
+	}
 	return nil
 }
 func main() {
