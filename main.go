@@ -211,7 +211,22 @@ func registerNewUser(s *state, cmd command) error {
 	}
 	return nil
 }
-
+func follow(s *state, url string) error {
+	currentUser := s.cfg.Current_user_name
+	uuid := uuid.New().String()
+	now := time.Now()
+	user, err := s.db.GetUser(context.Background(), currentUser)
+	if err != nil {
+		return err
+	}
+	params := database.CreateFeedFollowParams{
+		ID:        uuid,
+		CreatedAt: now,
+		UpdatedAt: now,
+		UserID:    user.ID,
+		FeedID:    a,
+	}
+}
 func main() {
 	s, err := startUp()
 	if err != nil {

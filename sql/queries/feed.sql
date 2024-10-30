@@ -15,6 +15,11 @@ SELECT *
 FROM feeds
 WHERE name = $1;
 
+-- name: GetFeedByUrl :one
+SELECT *
+FROM feeds
+WHERE URL = $1;
+
 -- name: Pprint :many
 SELECT feeds.name, feeds.url, users.name as username
 FROM feeds
