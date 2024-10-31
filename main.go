@@ -133,6 +133,8 @@ func scrapeFeeds(s *state) error {
 		return err
 	}
 	s.db.MarkFeedFetched(context.Background(), nextFeed)
+	s.db.GetFeed()
+	return nil
 }
 func reset(s *state, cmd command) error {
 	err := s.db.Reset(context.Background())
