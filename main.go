@@ -248,6 +248,20 @@ func following(s *state, cmd command, user database.User) error {
 	}
 	return nil
 }
+func unfollow(s *state, cmd command, user database.User) error {
+	if len(cmd.args) != 1 {
+		return errors.New("unfollow takes the URL you wish to unfollow")
+	}
+	params := database.DropFeedFollowParams{
+		Url:    cmd.args[0],
+		UserID: user.ID,
+	}
+	err := s.db.DropFeedFollow(context.Background(), params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func main() {
 	s, err := startUp()
 	if err != nil {
@@ -266,6 +280,7 @@ func main() {
 	c.register("feeds", getFeeds)
 	c.register("follow", middlewareLoggedIn(follow))
 	c.register("following", middlewareLoggedIn(following))
+	c.register("unfollow", middlewareLoggedIn(unfollow))
 	if len(os.Args) < 2 {
 		err = errors.New("too few cmdline arguments")
 	}
