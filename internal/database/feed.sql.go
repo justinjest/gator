@@ -7,29 +7,32 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
 const createFeed = `-- name: CreateFeed :one
-INSERT INTO feeds(id, created_at, updated_at, name, url, user_id)
+INSERT INTO feeds(id, created_at, updated_at, last_fetched_at, name, url, user_id)
 values (
     $1,
     $2,
     $3,
     $4,
     $5,
-    $6
+    $6,
+    $7
 )
-RETURNING id, created_at, updated_at, name, url, user_id
+RETURNING id, created_at, updated_at, last_fetched_at, name, url, user_id
 `
 
 type CreateFeedParams struct {
-	ID        string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	Url       string
-	UserID    string
+	ID            string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	LastFetchedAt sql.NullTime
+	Name          string
+	Url           string
+	UserID        string
 }
 
 func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, error) {
@@ -37,6 +40,7 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 		arg.ID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.LastFetchedAt,
 		arg.Name,
 		arg.Url,
 		arg.UserID,
@@ -46,6 +50,7 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastFetchedAt,
 		&i.Name,
 		&i.Url,
 		&i.UserID,
@@ -54,7 +59,7 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 }
 
 const getFeed = `-- name: GetFeed :one
-SELECT id, created_at, updated_at, name, url, user_id 
+SELECT id, created_at, updated_at, last_fetched_at, name, url, user_id 
 FROM feeds
 WHERE name = $1
 `
@@ -66,6 +71,7 @@ func (q *Queries) GetFeed(ctx context.Context, name string) (Feed, error) {
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastFetchedAt,
 		&i.Name,
 		&i.Url,
 		&i.UserID,
@@ -74,7 +80,7 @@ func (q *Queries) GetFeed(ctx context.Context, name string) (Feed, error) {
 }
 
 const getFeedByUrl = `-- name: GetFeedByUrl :one
-SELECT id, created_at, updated_at, name, url, user_id
+SELECT id, created_at, updated_at, last_fetched_at, name, url, user_id
 FROM feeds
 WHERE URL = $1
 `
@@ -86,6 +92,7 @@ func (q *Queries) GetFeedByUrl(ctx context.Context, url string) (Feed, error) {
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastFetchedAt,
 		&i.Name,
 		&i.Url,
 		&i.UserID,
