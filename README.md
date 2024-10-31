@@ -1,5 +1,5 @@
 # Gator
-A RSS aggregator that will let you browse headlines and descriptions from the command line. 
+gator is A RSS aggregator that will let you browse headlines and descriptions from the command line. 
 
 ## Use
 To use this program you will require Postgres and Go to be installed on your computer. After running go build you can run the program from your command line with ./gator
