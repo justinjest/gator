@@ -115,7 +115,7 @@ func addfeed(s *state, cmd command, user database.User) error {
 	if err != nil {
 		return err
 	}
-	print("%v\n", entry.Name)
+	fmt.Printf("%v\n", entry.Name)
 	return nil
 }
 func agg(s *state, cmd command) error {
@@ -127,13 +127,30 @@ func agg(s *state, cmd command) error {
 	fmt.Printf("%v\n", res)
 	return nil
 }
-func scrapeFeeds(s *state) error {
-	nextFeed, err := s.db.GetNextFeedToFetch(context.Background())
+func scrapeFeeds(s *state, cmd command) error {
+	if len(cmd.args) != 1 {
+		return errors.New("scrapeFeeds accepts exactly 1 paramater")
+	}
+	waitTime, err := time.ParseDuration(cmd.args[0])
 	if err != nil {
 		return err
 	}
-	s.db.MarkFeedFetched(context.Background(), nextFeed)
-	s.db.GetFeed()
+	ticker := time.NewTicker(waitTime)
+	for ; ; <-ticker.C {
+		fmt.Printf("Collecting feeds every %v\n", waitTime)
+		nextFeed, err := s.db.GetNextFeedToFetch(context.Background())
+		if err != nil {
+			return err
+		}
+		RSSf, err := fetchFeed(context.Background(), nextFeed.Url)
+		if err != nil {
+			return err
+		}
+		for _, data := range RSSf.Channel.Item {
+			fmt.Printf("%v\n", data)
+		}
+		s.db.MarkFeedFetched(context.Background(), nextFeed.ID)
+	}
 	return nil
 }
 func reset(s *state, cmd command) error {
@@ -284,7 +301,7 @@ func main() {
 	c.register("register", registerNewUser)
 	c.register("reset", reset)
 	c.register("users", getUsers)
-	c.register("agg", agg)
+	c.register("agg", scrapeFeeds)
 	c.register("addfeed", middlewareLoggedIn(addfeed))
 	c.register("feeds", getFeeds)
 	c.register("follow", middlewareLoggedIn(follow))

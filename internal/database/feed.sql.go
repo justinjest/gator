@@ -103,7 +103,7 @@ func (q *Queries) GetFeedByUrl(ctx context.Context, url string) (Feed, error) {
 const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
 SELECT id, created_at, updated_at, last_fetched_at, name, url, user_id
 FROM feeds
-ORDER by last_fetched_at ASC NULLS FIRST
+ORDER by last_fetched_at DESC NULLS FIRST
 LIMIT 1
 `
 
