@@ -101,7 +101,7 @@ func (q *Queries) GetFeedByUrl(ctx context.Context, url string) (Feed, error) {
 }
 
 const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
-SELECT feeds.url
+SELECT feeds.id
 FROM feeds
 ORDER by last_fetched_at ASC NULLS FIRST
 LIMIT 1
@@ -109,9 +109,9 @@ LIMIT 1
 
 func (q *Queries) GetNextFeedToFetch(ctx context.Context) (string, error) {
 	row := q.db.QueryRowContext(ctx, getNextFeedToFetch)
-	var url string
-	err := row.Scan(&url)
-	return url, err
+	var id string
+	err := row.Scan(&id)
+	return id, err
 }
 
 const markFeedFetched = `-- name: MarkFeedFetched :exec
