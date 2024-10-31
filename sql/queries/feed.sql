@@ -35,5 +35,5 @@ WHERE feeds.id = $1;
 -- name: GetNextFeedToFetch :one
 SELECT *
 FROM feeds
-ORDER by last_fetched_at DESC NULLS FIRST
+ORDER by last_fetched_at ASC NULLS FIRST
 LIMIT 1;
