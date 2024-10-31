@@ -17,3 +17,12 @@ FROM feed_follows
 INNER join users on feed_follows.user_id = users.id
 INNER JOIN feeds on feed_follows.feed_id = feeds.id
 WHERE users.id = $1;
+
+-- name: DropFeedFollow :exec
+DELETE FROM feed_follows
+WHERE feed_follows.feed_id = (
+    SELECT feeds.id
+    From feeds
+    WHERE feeds.url = $1
+)
+AND feed_follows.user_id = $2;
