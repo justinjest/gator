@@ -31,3 +31,9 @@ ON feeds.user_id = users.id;
 UPDATE feeds
 SET feeds.updated_at = NOW(), feeds.last_fetched_at = NOW()
 WHERE feeds.id = $1;
+
+-- name: GetNextFeedToFetch :one
+SELECT feeds.url
+FROM feeds
+ORDER by last_fetched_at ASC NULLS FIRST
+LIMIT 1;
