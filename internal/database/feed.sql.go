@@ -100,6 +100,20 @@ func (q *Queries) GetFeedByUrl(ctx context.Context, url string) (Feed, error) {
 	return i, err
 }
 
+const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
+SELECT feeds.url
+FROM feeds
+ORDER by last_fetched_at ASC NULLS FIRST
+LIMIT 1
+`
+
+func (q *Queries) GetNextFeedToFetch(ctx context.Context) (string, error) {
+	row := q.db.QueryRowContext(ctx, getNextFeedToFetch)
+	var url string
+	err := row.Scan(&url)
+	return url, err
+}
+
 const pprint = `-- name: Pprint :many
 SELECT feeds.name, feeds.url, users.name as username
 FROM feeds
