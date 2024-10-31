@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -178,15 +179,6 @@ func scrapeFeeds(s *state, cmd command) error {
 	}
 	return nil
 }
-func stringToDateTime(s string) (time.Time, error) {
-	layout := "2006-01-02T15:04:05.000Z"
-	t, err := time.Parse(layout, s)
-
-	if err != nil {
-		return time.Now(), err
-	}
-	return t, nil
-}
 func derefOrEmpty[T any](val *T) T {
 	if val == nil {
 		var empty T
@@ -194,7 +186,6 @@ func derefOrEmpty[T any](val *T) T {
 	}
 	return *val
 }
-
 func isNotNil[T any](val *T) bool {
 	return val != nil
 }
@@ -205,7 +196,6 @@ func sqlNullableString(s *string) sql.NullString {
 	}
 	return sqlStrComment
 }
-
 func reset(s *state, cmd command) error {
 	err := s.db.Reset(context.Background())
 	if err != nil {
@@ -341,6 +331,33 @@ func unfollow(s *state, cmd command, user database.User) error {
 	}
 	return nil
 }
+func browse(s *state, cmd command, user database.User) error {
+	userID := user.ID
+	var limit int
+	var err error
+	if len(cmd.args) > 1 {
+		limit, err = strconv.Atoi(cmd.args[0])
+		if err != nil {
+			return err
+		}
+	} else {
+		limit = 2
+	}
+	getPosts := database.GetPostsForUserParams{
+		UserID: userID,
+		Limit:  int32(limit),
+	}
+	posts, err := s.db.GetPostsForUser(context.Background(), getPosts)
+	if err != nil {
+		return err
+	}
+	for _, data := range posts {
+		fmt.Printf("%v\n", data.Title)
+		fmt.Printf("%v\n", data.PublishedAt)
+		fmt.Printf("%v\n", data.Description)
+	}
+	return nil
+}
 func main() {
 	s, err := startUp()
 	if err != nil {
@@ -360,6 +377,7 @@ func main() {
 	c.register("follow", middlewareLoggedIn(follow))
 	c.register("following", middlewareLoggedIn(following))
 	c.register("unfollow", middlewareLoggedIn(unfollow))
+	c.register("browse", middlewareLoggedIn(browse))
 	if len(os.Args) < 2 {
 		err = errors.New("too few cmdline arguments")
 	}
