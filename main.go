@@ -16,6 +16,7 @@ import (
 	json_parser "github.com/justinjest/gator/internal/config"
 	"github.com/justinjest/gator/internal/database"
 
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -147,12 +148,64 @@ func scrapeFeeds(s *state, cmd command) error {
 			return err
 		}
 		for _, data := range RSSf.Channel.Item {
-			fmt.Printf("%v\n", data)
+			postuuid := uuid.New().String()
+			title := sqlNullableString(&data.Title)
+			description := sqlNullableString(&data.Description)
+			timePub, err := time.Parse(time.RFC1123Z, data.PubDate)
+			if err != nil {
+				return err
+			}
+			postParams := database.CreatePostParams{
+				ID:          postuuid,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+				Title:       title,
+				Url:         data.Link,
+				Description: description,
+				PublishedAt: timePub,
+				FeedID:      nextFeed.ID,
+			}
+			_, err = s.db.CreatePost(context.Background(), postParams)
+			if err != nil {
+				pqErr, ok := err.(*pq.Error)
+				if ok && pqErr.Code == "23505" { // Error code for duplicate key
+				} else {
+					return err
+				}
+			}
 		}
 		s.db.MarkFeedFetched(context.Background(), nextFeed.ID)
 	}
 	return nil
 }
+func stringToDateTime(s string) (time.Time, error) {
+	layout := "2006-01-02T15:04:05.000Z"
+	t, err := time.Parse(layout, s)
+
+	if err != nil {
+		return time.Now(), err
+	}
+	return t, nil
+}
+func derefOrEmpty[T any](val *T) T {
+	if val == nil {
+		var empty T
+		return empty
+	}
+	return *val
+}
+
+func isNotNil[T any](val *T) bool {
+	return val != nil
+}
+func sqlNullableString(s *string) sql.NullString {
+	sqlStrComment := sql.NullString{
+		String: derefOrEmpty(s),
+		Valid:  isNotNil(s),
+	}
+	return sqlStrComment
+}
+
 func reset(s *state, cmd command) error {
 	err := s.db.Reset(context.Background())
 	if err != nil {

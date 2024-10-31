@@ -25,6 +25,17 @@ CREATE TABLE feed_follows(
     UNIQUE(user_id, feed_id) 
 );
 
+CREATE TABLE posts(
+    id text PRIMARY KEY,
+    created_at timestamp NOT NULL,
+    updated_at timestamp NOT NULL,
+    title text,
+    url text UNIQUE NOT NULL,
+    description text,
+    published_at timestamp NOT NULL,
+    feed_id text NOT NULL references feeds(id)
+);
+
 -- +goose Down
 DROP TABLE feeds CASCADE;
 DROP TABLE feed_follows CASCADE;
