@@ -29,7 +29,7 @@ ON feeds.user_id = users.id;
 
 -- name: MarkFeedFetched :exec
 UPDATE feeds
-SET feeds.updated_at = NOW(), feeds.last_fetched_at = NOW()
+SET updated_at = NOW(), last_fetched_at = NOW()
 WHERE feeds.id = $1;
 
 -- name: GetNextFeedToFetch :one
