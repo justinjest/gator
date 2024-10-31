@@ -120,6 +120,9 @@ func addfeed(s *state, cmd command, user database.User) error {
 	fmt.Printf("%v\n", entry.Name)
 	return nil
 }
+
+// TODO: Currently scrape feeds doesn't return "nice" functions
+// We should probably let this be cleaner
 func agg(s *state, cmd command) error {
 	url := "https://www.wagslane.dev/index.xml"
 	res, err := fetchFeed(context.Background(), url)
@@ -333,11 +336,13 @@ func unfollow(s *state, cmd command, user database.User) error {
 }
 func browse(s *state, cmd command, user database.User) error {
 	userID := user.ID
+	fmt.Printf("%v\n", userID)
 	var limit int
 	var err error
 	if len(cmd.args) > 1 {
 		limit, err = strconv.Atoi(cmd.args[0])
 		if err != nil {
+			fmt.Printf("error converting cmd into str\n")
 			return err
 		}
 	} else {
@@ -349,6 +354,7 @@ func browse(s *state, cmd command, user database.User) error {
 	}
 	posts, err := s.db.GetPostsForUser(context.Background(), getPosts)
 	if err != nil {
+		fmt.Printf("error getting posts\n")
 		return err
 	}
 	for _, data := range posts {
