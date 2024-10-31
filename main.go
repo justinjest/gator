@@ -127,6 +127,13 @@ func agg(s *state, cmd command) error {
 	fmt.Printf("%v\n", res)
 	return nil
 }
+func scrapeFeeds(s *state) error {
+	nextFeed, err := s.db.GetNextFeedToFetch(context.Background())
+	if err != nil {
+		return err
+	}
+	s.db.MarkFeedFetched
+}
 func reset(s *state, cmd command) error {
 	err := s.db.Reset(context.Background())
 	if err != nil {

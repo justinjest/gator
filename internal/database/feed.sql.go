@@ -114,6 +114,17 @@ func (q *Queries) GetNextFeedToFetch(ctx context.Context) (string, error) {
 	return url, err
 }
 
+const markFeedFetched = `-- name: MarkFeedFetched :exec
+UPDATE feeds
+SET feeds.updated_at = NOW(), feeds.last_fetched_at = NOW()
+WHERE feeds.id = $1
+`
+
+func (q *Queries) MarkFeedFetched(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, markFeedFetched, id)
+	return err
+}
+
 const pprint = `-- name: Pprint :many
 SELECT feeds.name, feeds.url, users.name as username
 FROM feeds
