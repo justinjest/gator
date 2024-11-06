@@ -35,6 +35,33 @@ Removes url from yoru following list
 browse [?number]
 Takes an optional number that will return number or 2 articles that were most recently updated
 
+## 🤝 Contributing
+
+### Clone the repo
+
+```bash
+git clone https://github.com/justinjest/gator/latest
+cd gator
+```
+
+### Build the project
+
+```bash
+go build
+```
+
+### Run the project
+
+```bash
+./gator register
+```
+
+### Run the tests
+
+```bash
+go test ./...
+```
+
 ### Submit a pull request
 
 If you'd like to contribute, please fork the repository and open a pull request to the `main` branch.
