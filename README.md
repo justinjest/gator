@@ -34,3 +34,7 @@ Removes url from yoru following list
 
 browse [?number]
 Takes an optional number that will return number or 2 articles that were most recently updated
+
+### Submit a pull request
+
+If you'd like to contribute, please fork the repository and open a pull request to the `main` branch.
